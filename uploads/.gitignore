@@ -1,0 +1,6 @@
+# Ignore uploaded media files in uploads and subfolders
+*
+!.gitignore
+!*/
+!.gitkeep
+!*/*.gitkeep

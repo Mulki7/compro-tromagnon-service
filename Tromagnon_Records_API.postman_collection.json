@@ -1,0 +1,1953 @@
+{
+  "info": {
+    "name": "Tromagnon Records API",
+    "_postman_id": "tromagnon-records-api-v1",
+    "description": "Koleksi API lengkap untuk backend Tromagnon Records.\n\n**Fitur Utama:**\n- **Authorization Tab:** Token JWT otomatis tersimpan di variable `{{token}}` setelah Admin Login dan di-inject via tab **Authorization (Bearer Token)** pada setiap endpoint Admin, tanpa perlu manual header!\n- **Direct Image Upload:** Setiap entity yang memiliki gambar (Artist, Release, News, Hero Banner) bisa langsung mengunggah file via multipart form-data tanpa perlu endpoint upload terpisah.\n- **Array Format Support:** Field `genre` pada Artist dan `format` pada Release mendukung JSON array format (contoh: `[\"Indie Rock\", \"Alternative\"]`) maupun teks tunggal biasa.\n- **Multi-Hero Banners:** Slider homepage dinamis dengan full CRUD dan kontrol `order`.\n- **Soft Delete & Partial Update:** Semua resource mendukung soft delete dan update parsial via PATCH.\n\n**Langkah Pengujian:**\n1. Import koleksi ini ke Postman\n2. Buka folder `🔐 Auth` -> jalankan `Admin Login` (token otomatis tersimpan ke variable)\n3. Jalankan request admin lainnya tanpa perlu setup header manual!",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "artist_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "release_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "news_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "live_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "banner_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🩺 Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Cek status server dan database connection."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.token) {",
+                  "    pm.collectionVariables.set('token', res.data.token);",
+                  "    console.log('✅ Token berhasil disimpan ke {{token}}');",
+                  "} else {",
+                  "    console.log('❌ Login gagal:', res.message);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@tromagnon.com\",\n  \"password\": \"admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "login"
+              ]
+            },
+            "description": "Login sebagai admin default. Token JWT otomatis tersimpan ke variable `{{token}}`."
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/admin/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "me"
+              ]
+            },
+            "description": "Mendapatkan profil admin yang sedang login menggunakan Bearer Token dari tab Authorization."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎨 Artists",
+      "item": [
+        {
+          "name": "📢 Public",
+          "item": [
+            {
+              "name": "List Active Artists",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/artists",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "artists"
+                  ]
+                },
+                "description": "Mendapatkan daftar semua artis yang berstatus 'active'."
+              }
+            },
+            {
+              "name": "Get Artist by Slug",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/artists/:slug",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "artists",
+                    ":slug"
+                  ],
+                  "variable": [
+                    {
+                      "key": "slug",
+                      "value": "efek-rumah-kaca"
+                    }
+                  ]
+                },
+                "description": "Mendapatkan detail profil artis beserta daftar rilisan dan event yang terkait."
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔒 Admin",
+          "item": [
+            {
+              "name": "List All Artists (Admin)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/artists",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "artists"
+                  ]
+                },
+                "description": "Daftar semua artis untuk admin (termasuk status draft / inactive)."
+              }
+            },
+            {
+              "name": "Get Artist by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/artists/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "artists",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{artist_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Artist",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const res = pm.response.json();",
+                      "if (res.success && res.data && res.data.id) {",
+                      "    pm.collectionVariables.set('artist_id', res.data.id);",
+                      "    console.log('✅ artist_id saved:', res.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "Efek Rumah Kaca",
+                      "type": "text"
+                    },
+                    {
+                      "key": "bio",
+                      "value": "Band indie rock asal Jakarta yang berdiri sejak 2001.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "genre",
+                      "value": "[\"Indie Rock\", \"Alternative\"]",
+                      "type": "text",
+                      "description": "Bisa JSON array string seperti [\"Indie Rock\", \"Alternative\"] atau teks biasa."
+                    },
+                    {
+                      "key": "social_links",
+                      "value": "{\"instagram\":\"https://instagram.com/efekrumahkaca\",\"spotify\":\"https://open.spotify.com/artist/efekrumahkaca\"}",
+                      "type": "text",
+                      "description": "JSON string"
+                    },
+                    {
+                      "key": "status",
+                      "value": "active",
+                      "type": "text"
+                    },
+                    {
+                      "key": "photo",
+                      "type": "file",
+                      "src": [],
+                      "description": "Pilih file foto artis dari komputer (jpg/png/webp)"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/artists",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "artists"
+                  ]
+                },
+                "description": "Membuat artis baru dengan opsi upload foto langsung via field `photo` (type: File).\nID artis baru otomatis disimpan ke `{{artist_id}}`."
+              }
+            },
+            {
+              "name": "Update Artist — Full (PUT)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "Efek Rumah Kaca",
+                      "type": "text"
+                    },
+                    {
+                      "key": "bio",
+                      "value": "Bio artis yang diperbarui secara lengkap.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "genre",
+                      "value": "[\"Indie Rock\", \"Post-Rock\"]",
+                      "type": "text"
+                    },
+                    {
+                      "key": "social_links",
+                      "value": "{\"instagram\":\"https://instagram.com/efekrumahkaca\"}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "status",
+                      "value": "active",
+                      "type": "text"
+                    },
+                    {
+                      "key": "photo",
+                      "type": "file",
+                      "src": [],
+                      "description": "Biarkan kosong bila tidak ingin mengganti foto"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/artists/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "artists",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{artist_id}}"
+                    }
+                  ]
+                },
+                "description": "Update semua data artis (PUT replace)."
+              }
+            },
+            {
+              "name": "Update Artist — Partial (PATCH)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "status",
+                      "value": "inactive",
+                      "type": "text",
+                      "description": "Nilai: active / inactive / draft"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/artists/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "artists",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{artist_id}}"
+                    }
+                  ]
+                },
+                "description": "Update sebagian field tanpa mengubah field lainnya."
+              }
+            },
+            {
+              "name": "Delete Artist (Soft Delete)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/artists/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "artists",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{artist_id}}"
+                    }
+                  ]
+                },
+                "description": "Soft delete artis (kolom `deleted_at` terisi, data tidak hilang permanen)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "💿 Releases",
+      "item": [
+        {
+          "name": "📢 Public",
+          "item": [
+            {
+              "name": "List Published Releases",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/releases",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "releases"
+                  ]
+                },
+                "description": "Mendapatkan daftar rilisan album/single yang berstatus 'published'."
+              }
+            },
+            {
+              "name": "Get Release by Slug",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/releases/:slug",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "releases",
+                    ":slug"
+                  ],
+                  "variable": [
+                    {
+                      "key": "slug",
+                      "value": "rasuk"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔒 Admin",
+          "item": [
+            {
+              "name": "List All Releases (Admin)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/releases",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "releases"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Release by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/releases/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "releases",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{release_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Release",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const res = pm.response.json();",
+                      "if (res.success && res.data && res.data.id) {",
+                      "    pm.collectionVariables.set('release_id', res.data.id);",
+                      "    console.log('✅ release_id saved:', res.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "artist_id",
+                      "value": "{{artist_id}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "title",
+                      "value": "Rasuk",
+                      "type": "text"
+                    },
+                    {
+                      "key": "release_year",
+                      "value": "2023",
+                      "type": "text"
+                    },
+                    {
+                      "key": "format",
+                      "value": "[\"LP\", \"Digital\"]",
+                      "type": "text",
+                      "description": "Bisa JSON array string seperti [\"LP\", \"Digital\"] atau teks biasa"
+                    },
+                    {
+                      "key": "description",
+                      "value": "Album ketiga dengan eksplorasi sonik baru.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "streaming_links",
+                      "value": "{\"spotify\":\"https://open.spotify.com/album/rasuk\",\"apple_music\":\"https://music.apple.com/album/rasuk\"}",
+                      "type": "text",
+                      "description": "JSON string"
+                    },
+                    {
+                      "key": "status",
+                      "value": "published",
+                      "type": "text"
+                    },
+                    {
+                      "key": "artwork",
+                      "type": "file",
+                      "src": [],
+                      "description": "Upload cover artwork langsung (jpg/png/webp)"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/releases",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "releases"
+                  ]
+                },
+                "description": "Buat rilisan baru dan upload artwork langsung. ID tersimpan ke `{{release_id}}`."
+              }
+            },
+            {
+              "name": "Update Release — Full (PUT)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "artist_id",
+                      "value": "{{artist_id}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "title",
+                      "value": "Rasuk (Remastered)",
+                      "type": "text"
+                    },
+                    {
+                      "key": "release_year",
+                      "value": "2024",
+                      "type": "text"
+                    },
+                    {
+                      "key": "format",
+                      "value": "[\"LP\", \"CD\", \"Digital\"]",
+                      "type": "text"
+                    },
+                    {
+                      "key": "description",
+                      "value": "Edisi remaster audio berkualitas tinggi.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "streaming_links",
+                      "value": "{\"spotify\":\"https://open.spotify.com/album/rasuk-remaster\"}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "status",
+                      "value": "published",
+                      "type": "text"
+                    },
+                    {
+                      "key": "artwork",
+                      "type": "file",
+                      "src": [],
+                      "description": "Biarkan kosong bila tidak ingin mengganti artwork"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/releases/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "releases",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{release_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update Release — Partial (PATCH)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "status",
+                      "value": "draft",
+                      "type": "text",
+                      "description": "Nilai: published / draft"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/releases/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "releases",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{release_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Delete Release (Soft Delete)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/releases/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "releases",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{release_id}}"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📰 News",
+      "item": [
+        {
+          "name": "📢 Public",
+          "item": [
+            {
+              "name": "List Published News",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/news",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "news"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get News by Slug",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/news/:slug",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "news",
+                    ":slug"
+                  ],
+                  "variable": [
+                    {
+                      "key": "slug",
+                      "value": "tromagnon-fest-2026"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔒 Admin",
+          "item": [
+            {
+              "name": "List All News (Admin)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/news",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "news"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get News by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/news/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "news",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{news_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create News",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const res = pm.response.json();",
+                      "if (res.success && res.data && res.data.id) {",
+                      "    pm.collectionVariables.set('news_id', res.data.id);",
+                      "    console.log('✅ news_id saved:', res.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "title",
+                      "value": "Pengumuman Festival Musik Tromagnon Fest 2026",
+                      "type": "text"
+                    },
+                    {
+                      "key": "content",
+                      "value": "Tromagnon Records resmi mengumumkan jadwal festival musik tahunan yang akan digelar di Jakarta.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "author",
+                      "value": "Editorial Team",
+                      "type": "text"
+                    },
+                    {
+                      "key": "status",
+                      "value": "published",
+                      "type": "text"
+                    },
+                    {
+                      "key": "cover",
+                      "type": "file",
+                      "src": [],
+                      "description": "Upload cover berita (jpg/png/webp)"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/news",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "news"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update News — Full (PUT)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "title",
+                      "value": "Festival Musik Tromagnon Fest 2026 Diresmikan",
+                      "type": "text"
+                    },
+                    {
+                      "key": "content",
+                      "value": "Konten berita yang telah diperbarui secara penuh.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "author",
+                      "value": "Chief Editor",
+                      "type": "text"
+                    },
+                    {
+                      "key": "status",
+                      "value": "published",
+                      "type": "text"
+                    },
+                    {
+                      "key": "cover",
+                      "type": "file",
+                      "src": [],
+                      "description": "Biarkan kosong bila tidak ingin mengganti cover"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/news/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "news",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{news_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update News — Partial (PATCH)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "status",
+                      "value": "draft",
+                      "type": "text",
+                      "description": "Nilai: published / draft"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/news/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "news",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{news_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Delete News (Soft Delete)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/news/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "news",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{news_id}}"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🎤 Live Events",
+      "item": [
+        {
+          "name": "📢 Public",
+          "item": [
+            {
+              "name": "List Upcoming Events",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/live",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "live"
+                  ]
+                },
+                "description": "Daftar event yang berstatus 'upcoming' diurutkan berdasarkan tanggal terdekat."
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔒 Admin",
+          "item": [
+            {
+              "name": "List All Events (Admin)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/live",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "live"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Event by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/live/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "live",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{live_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Live Event",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const res = pm.response.json();",
+                      "if (res.success && res.data && res.data.id) {",
+                      "    pm.collectionVariables.set('live_id', res.data.id);",
+                      "    console.log('✅ live_id saved:', res.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"artist_id\": \"{{artist_id}}\",\n  \"event_date\": \"2027-06-15\",\n  \"city\": \"Jakarta\",\n  \"venue\": \"Istora Senayan\",\n  \"country\": \"Indonesia\",\n  \"ticket_url\": \"https://tiket.com/event/tromagnon-jakarta-2027\",\n  \"status\": \"upcoming\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/live",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "live"
+                  ]
+                },
+                "description": "Format `event_date`: YYYY-MM-DD. Status: upcoming / past / cancelled."
+              }
+            },
+            {
+              "name": "Update Event — Full (PUT)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"artist_id\": \"{{artist_id}}\",\n  \"event_date\": \"2027-06-20\",\n  \"city\": \"Jakarta\",\n  \"venue\": \"Gelora Bung Karno\",\n  \"country\": \"Indonesia\",\n  \"ticket_url\": \"https://tiket.com/event/update\",\n  \"status\": \"upcoming\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/live/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "live",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{live_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Cancel Event (PATCH)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"cancelled\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/live/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "live",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{live_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update Event — Partial (PATCH)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"venue\": \"Taman Ismail Marzuki\",\n  \"event_date\": \"2027-07-10\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/live/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "live",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{live_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Delete Event (Soft Delete)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/live/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "live",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{live_id}}"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🖼️ Hero Banners",
+      "item": [
+        {
+          "name": "📢 Public",
+          "item": [
+            {
+              "name": "List Active Hero Banners",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/hero-banners",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "hero-banners"
+                  ]
+                },
+                "description": "Daftar banner aktif untuk slider/hero homepage, diurutkan berdasarkan `order` ascending."
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔒 Admin",
+          "item": [
+            {
+              "name": "List All Banners (Admin)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/hero-banners",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "hero-banners"
+                  ]
+                },
+                "description": "Daftar semua hero banner untuk admin (aktif dan non-aktif)."
+              }
+            },
+            {
+              "name": "Get Banner by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/hero-banners/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "hero-banners",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{banner_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Hero Banner",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const res = pm.response.json();",
+                      "if (res.success && res.data && res.data.id) {",
+                      "    pm.collectionVariables.set('banner_id', res.data.id);",
+                      "    console.log('✅ banner_id saved:', res.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "title",
+                      "value": "TROMAGNON RECORDS",
+                      "type": "text"
+                    },
+                    {
+                      "key": "subtitle",
+                      "value": "Distorting Boundaries Since 2020",
+                      "type": "text"
+                    },
+                    {
+                      "key": "cta_text",
+                      "value": "Explore Artists",
+                      "type": "text"
+                    },
+                    {
+                      "key": "cta_link",
+                      "value": "/artists",
+                      "type": "text"
+                    },
+                    {
+                      "key": "order",
+                      "value": "1",
+                      "type": "text",
+                      "description": "Urutan tampil di homepage (1, 2, 3, dst)"
+                    },
+                    {
+                      "key": "is_active",
+                      "value": "true",
+                      "type": "text"
+                    },
+                    {
+                      "key": "banner_image",
+                      "type": "file",
+                      "src": [],
+                      "description": "Upload gambar banner langsung (jpg/png/webp, maks 5MB)"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/hero-banners",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "hero-banners"
+                  ]
+                },
+                "description": "Buat banner slider baru untuk homepage. ID banner otomatis disimpan ke `{{banner_id}}`."
+              }
+            },
+            {
+              "name": "Update Banner — Full (PUT)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "title",
+                      "value": "TROMAGNON RECORDS FESTIVAL",
+                      "type": "text"
+                    },
+                    {
+                      "key": "subtitle",
+                      "value": "Independent Music Showcase & Conference",
+                      "type": "text"
+                    },
+                    {
+                      "key": "cta_text",
+                      "value": "Get Tickets",
+                      "type": "text"
+                    },
+                    {
+                      "key": "cta_link",
+                      "value": "/live",
+                      "type": "text"
+                    },
+                    {
+                      "key": "order",
+                      "value": "1",
+                      "type": "text"
+                    },
+                    {
+                      "key": "is_active",
+                      "value": "true",
+                      "type": "text"
+                    },
+                    {
+                      "key": "banner_image",
+                      "type": "file",
+                      "src": [],
+                      "description": "Biarkan kosong bila tidak ingin mengganti gambar banner"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/hero-banners/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "hero-banners",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{banner_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update Banner — Partial (PATCH)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "is_active",
+                      "value": "false",
+                      "type": "text",
+                      "description": "Toggle aktif/nonaktif"
+                    },
+                    {
+                      "key": "order",
+                      "value": "2",
+                      "type": "text",
+                      "description": "Ubah posisi urutan slide"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/hero-banners/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "hero-banners",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{banner_id}}"
+                    }
+                  ]
+                },
+                "description": "Kirim field yang ingin diubah saja, misalnya mematikan banner (`is_active: false`) atau mengubah urutan (`order: 2`)."
+              }
+            },
+            {
+              "name": "Delete Banner (Soft Delete)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/hero-banners/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "hero-banners",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{banner_id}}"
+                    }
+                  ]
+                },
+                "description": "Soft delete banner."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📸 Upload (Utility)",
+      "item": [
+        {
+          "name": "Upload File (Standalone)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Upload file gambar (jpg/png/webp, maks 5MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/upload",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "upload"
+              ]
+            },
+            "description": "Endpoint utility jika membutuhkan upload file terpisah untuk mendapatkan file URL.\n\n*Catatan: Pada endpoint Artist, Release, News, dan Hero Banner, Anda sudah bisa langsung upload gambar di masing-masing form tanpa perlu endpoint ini.*"
+          }
+        }
+      ]
+    }
+  ]
+}
