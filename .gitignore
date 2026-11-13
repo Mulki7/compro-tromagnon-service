@@ -1,0 +1,61 @@
+# ==============================================================================
+# Tromagnon Records Backend — Git Ignore
+# ==============================================================================
+
+# 1. Environment variables & Secrets (CRITICAL: jangan sampai bocor ke GitHub)
+.env
+.env.*
+!.env.example
+
+# 2. Go Binaries & Build Output
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/server
+/main
+/bin/
+/dist/
+
+# 3. Test artifacts & coverage
+*.test
+*.out
+coverage.txt
+
+# 4. Uploaded media files (hanya simpan struktur folder & file .gitkeep)
+/uploads/*
+!/uploads/.gitkeep
+!/uploads/.gitignore
+!/uploads/*/
+!/uploads/*/.gitkeep
+
+# 5. Temporary & Scratch scripts
+/scratch/
+tmp/
+temp/
+
+# 6. Go workspace files
+go.work
+go.work.sum
+
+# 7. IDE & Editor configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# 8. OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# 9. Logs
+*.log
